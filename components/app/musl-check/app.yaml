@@ -1,0 +1,20 @@
+# Alpine 层的端到端验证 App：C++ 标准库、线程与动态链接 zlib，
+# 证明 App 由 musl SDK 编译、打成 apk 并能在 Alpine rootfs 中运行。
+app:
+  name: musl-check
+  version: 1.0.0
+  description: Alpine musl 工具链与 apk 打包验证程序
+  type: exec
+  arch:
+    - armhf
+
+maintainer:
+  name: flange
+  email: flange@localhost
+
+build:
+  system: cmake
+
+packaging:
+  depends:
+    apk: [libstdc++, zlib]
