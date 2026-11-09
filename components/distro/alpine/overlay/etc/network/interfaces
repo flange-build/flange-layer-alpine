@@ -1,0 +1,6 @@
+# flange Alpine 基线：回环 + 有线 DHCP（ifupdown-ng，由 OpenRC networking 服务拉起）。
+auto lo
+iface lo inet loopback
+
+auto eth0
+iface eth0 inet dhcp

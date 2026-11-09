@@ -1,0 +1,8 @@
+#!/bin/sh
+# Alpine armv7 musl 交叉编译器：clang（内建镜像随 Swift 提供）+ Alpine SDK 的 gcc 运行库与 musl。
+# 默认 sysroot 为环境内 SDK；flange 传入的 --sysroot（组合了上游 App 的 SDK）排在后面并生效。
+set -eu
+exec /opt/swift-embedded/bin/clang --target=armv7-alpine-linux-musleabihf \
+    --sysroot=/opt/flange-sdk/armv7 \
+    -march=armv7-a -mfpu=vfpv3-d16 -mfloat-abi=hard \
+    -fuse-ld=lld --rtlib=libgcc --unwindlib=libgcc "$@"

@@ -1,0 +1,17 @@
+# Alpine Linux 发行版层：musl + apk + OpenRC + busybox。
+schema_version = 1
+api_version = 1
+name = "alpine"
+requires = ["flange"]
+
+[providers.distro]
+alpine = "strategies/distro/provider.py"
+
+[providers.environment]
+alpine = "strategies/environment/provider.py"
+
+[providers.toolchain]
+alpine = "strategies/toolchain/provider.py"
+
+[providers.packaging]
+apk = "strategies/packaging/provider.py"
