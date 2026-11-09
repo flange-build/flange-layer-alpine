@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import os
 import shutil
+from contextlib import contextmanager
 from pathlib import Path
 
 from builder.chroot import ChrootContext
@@ -86,6 +87,23 @@ def _repositories(config: dict) -> list[str]:
     return [f"{mirror}/{branch}/{name}" for name in settings.get("repositories", ["main"])]
 
 
+@contextmanager
+def _apk_session(root: Path, docker, context, arch: str):
+    """挂好共享 apk 缓存的 chroot；/etc/apk/cache 只在构建期存在，不进镜像。
+
+    缓存按 Alpine 架构隔离并跨工作区共享，Phase 1 下载的索引与包在 Phase 2
+    安装 App 依赖时复用。
+    """
+    cache = context.build_root / "cache/apk" / arch
+    cache.mkdir(parents=True, exist_ok=True)
+    mount = root / "etc/apk/cache"
+    with FileLock(cache.with_name(f".{cache.name}.flange.lock")), ChrootContext(root, docker) as chroot:
+        chroot.bind_mount(str(cache), mount)
+        yield chroot
+    if mount.is_dir() and not mount.is_symlink():
+        mount.rmdir()
+
+
 class ApkDistro(DistroBackend):
     """Alpine 的基础系统、App 安装与系统定制。"""
 
@@ -128,12 +146,7 @@ class ApkDistro(DistroBackend):
         apk = plan.value("apk")
         (root / "etc/apk/repositories").write_text("\n".join(apk["repositories"]) + "\n")
 
-        # apk 缓存按架构与仓库身份隔离并跨工作区共享；/etc/apk/cache 只在构建期存在。
-        cache = context.build_root / "cache/apk" / plan.value("architecture")
-        cache.mkdir(parents=True, exist_ok=True)
-        cache_mount = root / "etc/apk/cache"
-        with FileLock(cache.with_name(f".{cache.name}.flange.lock")), ChrootContext(root, docker) as chroot:
-            chroot.bind_mount(str(cache), cache_mount)
+        with _apk_session(root, docker, context, plan.value("architecture")) as chroot:
             status("apk update...")
             chroot.run(["apk", "update", "--no-progress"], label="apk update...")
             chroot.run(["apk", "upgrade", "--no-progress"], label="apk upgrade...")
@@ -142,8 +155,6 @@ class ApkDistro(DistroBackend):
                     ["apk", "add", "--no-progress", *apk["packages"]],
                     label=f"安装 {len(apk['packages'])} 个 apk 包...",
                 )
-        if cache_mount.is_dir() and not cache_mount.is_symlink():
-            cache_mount.rmdir()
 
     # ── Phase 2 ──────────────────────────────────────────────
 
@@ -165,9 +176,10 @@ class ApkDistro(DistroBackend):
             shutil.copy2(package.path, staging)
         builder._status(f"安装 {len(packages)} 个 App apk")
         try:
-            with ChrootContext(root, builder.docker) as chroot:
+            # App 包的运行依赖（如 python3）由 apk 从同一仓库与缓存解析。
+            with _apk_session(root, builder.docker, builder.context, alpine_arch(config)) as chroot:
                 chroot.run(
-                    ["apk", "add", "--no-progress", "--no-network", "--allow-untrusted",
+                    ["apk", "add", "--no-progress", "--allow-untrusted",
                      *[f"/tmp/flange-apks/{package.path.name}" for package in packages]],
                     label=f"apk add（{len(packages)} 个 App 包）...",
                 )

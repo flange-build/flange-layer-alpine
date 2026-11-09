@@ -14,6 +14,7 @@ local product = std.extVar('product');
     // Rockchip 平台层追加的是 Debian 包名与 DEB 形态的 flange App
     // （recoveryctl、flange-rootfs-grow），在 Alpine 上一律重置。
     packages: [],
-    custom_packages: [],
+    // adbd 经 build.deps 带入 usbmoded，二者在 Alpine 上以 OpenRC 服务运行。
+    custom_packages: ['adbd'],
   },
 } else {})

@@ -16,9 +16,10 @@ local variant = std.extVar('variant');
       },
       // OpenRC runlevel → 服务；构建期以符号链接启用，与 rc-update add 等价。
       services: {
-        sysinit: ['devfs', 'dmesg', 'mdev', 'hwdrivers'],
+        // eudev 而非 busybox mdev：flange App（如 usbmoded）依赖 udev 规则。
+        sysinit: ['devfs', 'dmesg', 'udev', 'udev-trigger', 'udev-settle'],
         boot: ['modules', 'sysctl', 'hostname', 'bootmisc', 'syslog', 'networking', 'seedrng'],
-        default: ['sshd', 'crond'],
+        default: ['sshd', 'crond', 'chronyd', 'udev-postmount'],
         shutdown: ['mount-ro', 'killprocs', 'savecache'],
       },
       // 串口 getty；板级按实际 console 覆盖。
@@ -44,7 +45,7 @@ local variant = std.extVar('variant');
     package_sets: {
       // shadow/sudo/bash 让 flange 核心账号逻辑（useradd/chpasswd/visudo）原样复用。
       base: [
-        'alpine-base', 'openrc', 'busybox-openrc', 'busybox-mdev-openrc',
+        'alpine-base', 'openrc', 'busybox-openrc', 'eudev',
         'shadow', 'sudo', 'bash', 'openssh', 'ca-certificates',
         'ifupdown-ng', 'iproute2', 'kmod', 'util-linux',
         'e2fsprogs', 'mtd-utils-ubi', 'chrony',
