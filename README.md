@@ -1,7 +1,7 @@
 # flange-layer-alpine
 
 flange 的 Alpine Linux 发行版层：musl + apk + OpenRC + busybox。
-基于 flange 的多层组合（`flange-layer` 分支，`docs/layers.md`），本层只提供发行版相关内容，
+基于 flange 的多层组合（`main` 分支，`docs/layers.md`），本层只提供发行版相关内容，
 板级 BSP 留在 flange 核心。
 
 ## 提供的策略
@@ -42,13 +42,13 @@ local product = std.extVar('product');
 
 ```toml
 schema_version = 2
-tool_root = "../flange-layer"
+tool_root = "../flange"
 build_dir = ".build"
 layers = ["../flange-layer-alpine"]
 ```
 
 ```bash
-source ../flange-layer/envsetup.sh
+source ../flange/envsetup.sh
 flange -C ../flange-alpine-ws layer check
 flange -C ../flange-alpine-ws target select luckfox-pico-pro-max-alpine-release
 flange -C ../flange-alpine-ws docker build      # 构建 flange-alpine:3.24 环境镜像
@@ -68,5 +68,5 @@ flange -C ../flange-alpine-ws app build musl-check
 ## 测试
 
 ```bash
-FLANGE_TOOL_ROOT=../flange-layer ../flange-layer/.venv/bin/python -m pytest tests
+FLANGE_TOOL_ROOT=../flange ../flange/.venv/bin/python -m pytest tests
 ```
