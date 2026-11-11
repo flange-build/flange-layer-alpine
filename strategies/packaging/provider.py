@@ -1,12 +1,13 @@
 """apk 包格式：apk-tools 3 的 ``apk mkpkg`` 生成包，设备与 rootfs 用 ``apk add`` 安装。
 
 不需要 abuild 与签名密钥：flange 自产包在 rootfs 与设备上均以 ``--allow-untrusted``
-安装。OpenRC 服务的 auto_start 由 post-install 脚本 ``rc-update add`` 实现，
+安装。OpenRC 服务的 auto_start 由安装与升级脚本 ``rc-update add`` 实现，
 rootfs 构建时该脚本在 qemu chroot 中执行。
 """
 
 from __future__ import annotations
 
+import json
 import os
 import shlex
 import subprocess
@@ -86,17 +87,20 @@ class ApkPackageBackend(PackageBackend):
         for directory in spec.data_dirs:
             install.append(f"mkdir -p {shlex.quote(directory)}")
         openrc = spec.openrc
-        if spec.app.type == "service" and openrc and openrc.auto_start:
+        if spec.app.type == "service" and openrc:
             service = shlex.quote(Path(openrc.script).name)
-            runlevel = shlex.quote(openrc.runlevel)
-            install.append(f"rc-update add {service} {runlevel} >/dev/null 2>&1 || true")
+            if openrc.auto_start:
+                runlevel = shlex.quote(openrc.runlevel)
+                install.append(f"mkdir -p /etc/runlevels/{runlevel}")
+                install.append(f"rc-update add {service} {runlevel}")
             remove.append(f"rc-service {service} stop >/dev/null 2>&1 || true")
-            remove.append(f"rc-update del {service} {runlevel} >/dev/null 2>&1 || true")
+            remove.append(f"rc-update --all del {service} >/dev/null 2>&1 || true")
         scripts = {}
         if install:
-            scripts["post-install"] = "\n".join(["#!/bin/sh", *install, "exit 0", ""])
+            content = "\n".join(["#!/bin/sh", "set -xe", *install, ""])
+            scripts.update({"post-install": content, "post-upgrade": content})
         if remove:
-            scripts["pre-deinstall"] = "\n".join(["#!/bin/sh", *remove, "exit 0", ""])
+            scripts["pre-deinstall"] = "\n".join(["#!/bin/sh", "set -xe", *remove, ""])
         return scripts
 
     def _mkpkg(
@@ -158,9 +162,24 @@ class ApkPackageBackend(PackageBackend):
             if package.is_symlink() or not package.is_file():
                 raise ValueError(f"缺少声明的包产物或包不是普通文件：{package}")
             with tempfile.TemporaryDirectory(prefix="unpack-", dir=install.parent) as temporary:
-                runner.run([APK, "extract", "--allow-untrusted", "--destination", temporary,
+                index = Path(temporary) / "index.adb"
+                runner.run([APK, "mkndx", "--allow-untrusted", "--output", str(index), str(package)])
+                inspected = runner.run([APK, "adbdump", "--format", "json", str(index)], capture=True)
+                try:
+                    metadata = json.loads(inspected.stdout)["packages"]
+                    if not isinstance(metadata, list) or len(metadata) != 1:
+                        raise ValueError("索引必须包含一个包")
+                    actual = metadata[0]["arch"]
+                except (ValueError, KeyError, TypeError) as error:
+                    raise ValueError(f"APK 架构元数据无效：{item.file}") from error
+                expected = self.architecture(arch)
+                if actual not in (expected, "noarch"):
+                    raise ValueError(f"APK 架构不匹配：{item.file} 是 {actual}，目标为 {expected}")
+                extracted = Path(temporary) / "root"
+                extracted.mkdir()
+                runner.run([APK, "extract", "--allow-untrusted", "--destination", str(extracted),
                             str(package)])
-                paths = DebPackageBackend._merge(Path(temporary), install)
+                paths = DebPackageBackend._merge(extracted, install)
                 if item.role == "runtime":
                     runtime_paths.update(paths)
         return runtime_paths

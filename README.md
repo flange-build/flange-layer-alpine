@@ -11,7 +11,7 @@ flange 的 Alpine Linux 发行版层：musl + apk + OpenRC + busybox。
 | `distro` | `alpine` | Alpine 3.24 minirootfs（按架构 SHA256 固定）+ qemu chroot `apk add`；账号、主机名、串口 getty、OpenRC runlevel；apk 包清单 |
 | `environment` | `alpine` | `flange-build` 镜像 + `apk.static`（摘要校验）+ 验签的 armv7 musl SDK；编译器复用镜像随 Swift 提供的 clang/lld |
 | `toolchain` | `alpine` | `armv7-alpine-linux-musleabihf-*` 包装脚本，SDK 位于 `/opt/flange-sdk/armv7` |
-| `packaging` | `apk` | `apk mkpkg` 生成 apk v3 包；OpenRC `auto_start` 经 post-install `rc-update add` |
+| `packaging` | `apk` | `apk mkpkg` 生成 apk v3 包；导入时校验包架构；OpenRC 安装和升级时兑现 `auto_start` |
 
 发行版基线在 `components/distro/alpine/config.jsonnet`，不继承 Ubuntu 的包集合；
 Alpine 专有参数在 `extensions['distro:alpine']`（版本、镜像站、minirootfs 摘要、runlevel 服务、串口）。
@@ -60,10 +60,26 @@ flange -C ../flange-alpine-ws app build musl-check
 
 - 服务 App 声明 `openrc.script`（安装到 `/etc/init.d/`），可与 `systemd.unit` 并存；
   构建时只打包目标 init 对应的文件。
+  选中 Alpine target 后，`flange app/package create --type service` 生成 OpenRC 脚本和声明；
+  原生服务文件名不做架构后缀裁剪，`camera-armhf` 仍安装为同名服务。
+- 安装和升级都会创建 `data_dirs`；`auto_start: true` 将服务加入声明的 runlevel。
+  注册前创建 runlevel 目录，支持基础系统尚未定义的自定义级别。
+  `auto_start: false` 不撤销用户启用，卸载时始终尝试停止服务并清理所有 runlevel 的链接。
 - OpenRC 脚本 pidfile 用 `/run/<服务名>.pid`，日志写 `/var/log/<服务名>.log`，
   `flange app debug/log` 依赖这两个路径。
+  start-stop-daemon 的 pidfile 直接指向服务进程；supervise-daemon 的服务 PID 从 OpenRC 状态读取，
+  验证父子关系，监督程序升级后出现 ` (deleted)` 也不会附加到监督进程。
+- 省略 `packaging.format` 时使用目标发行版的 `apk`，包括 `packaging.outputs` 声明的完整外部包。
+  导入 v2/v3 包时，包头架构必须匹配目标或为 `noarch`；提取后的用户态 ELF 校验机器类型、
+  加载器、SDK 提供的 libc 依赖及 ARM 浮点 ABI，拒绝混入 glibc 动态程序或共享库。
+  检查不覆盖全部运行库和符号版本，不能替代设备运行验证。
+  rootfs 安装前统一检查报告的发行版和用户态 ABI 身份。
+  不同 App 的同名 APK 使用独立暂存路径，避免互相覆盖。
 - apk 依赖用 `packaging.depends.apk` 声明；顶层 `depends` 是 Debian 包名，不用于 apk。
 - `components/app/musl-check` 是端到端验证 App（C++、线程、动态 zlib）。
+
+基础缓存通过 flange 的公共发行版入口纳入活树存储、快照和 chroot 等配方；
+公共实现变化会使 Alpine 的基础缓存失效，层内只维护发行版专属输入。
 
 ## 测试
 

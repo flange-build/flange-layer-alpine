@@ -21,6 +21,7 @@ from builder.docker import BuildError
 from builder.environment import environment_identity
 from builder.graph import InputSpec, TaskPlan
 from builder.locking import FileLock
+from builder.packaging.staging import stage_packages
 from builder.rootfs_base import emulator_for
 from builder.snapshot import TAR_METADATA_OPTIONS
 
@@ -132,10 +133,6 @@ class ApkDistro(DistroBackend):
                 environment_identity(emulator=emulator, config=config, context=context),
             ),
         ]
-        for filename in ("chroot.py", "snapshot.py", "source.py", "docker.py", "locking.py"):
-            path = context.tool_root / "builder" / filename
-            if path.is_file():
-                inputs.append(InputSpec.file(f"recipe:{filename}", path))
         return TaskPlan("rootfs:base", "alpine-base-apk-v1", tuple(inputs), ())
 
     def build_base(self, plan, root, *, context, source, docker, status):
@@ -162,29 +159,20 @@ class ApkDistro(DistroBackend):
         names = builder._component_config(config).get("custom_packages") or []
         if not names:
             return
-        if builder.app_report is None:
-            raise BuildError("rootfs 缺少本次构建的 AppBuildReport")
-        if not builder.app_report.validate():
-            raise BuildError("App 产物已经变更或缺失，拒绝安装")
-        packages = builder.app_report.runtime_packages_for(names)
+        packages = builder._app_runtime_packages(config)
+        if not packages:
+            return
         wrong = [package.path.name for package in packages if package.format != "apk"]
         if wrong:
             raise BuildError(f"Alpine rootfs 只能安装 apk 格式的 App 包：{', '.join(wrong)}")
-        staging = root / "tmp/flange-apks"
-        staging.mkdir(parents=True, exist_ok=True)
-        for package in packages:
-            shutil.copy2(package.path, staging)
         builder._status(f"安装 {len(packages)} 个 App apk")
-        try:
+        with stage_packages(packages, root, "flange-apks") as paths:
             # App 包的运行依赖（如 python3）由 apk 从同一仓库与缓存解析。
             with _apk_session(root, builder.docker, builder.context, alpine_arch(config)) as chroot:
                 chroot.run(
-                    ["apk", "add", "--no-progress", "--allow-untrusted",
-                     *[f"/tmp/flange-apks/{package.path.name}" for package in packages]],
+                    ["apk", "add", "--no-progress", "--allow-untrusted", *paths],
                     label=f"apk add（{len(packages)} 个 App 包）...",
                 )
-        finally:
-            shutil.rmtree(staging)
 
     def install_extra(self, builder, root, config):
         rootfs = builder._component_config(config)
