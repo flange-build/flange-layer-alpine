@@ -2,7 +2,7 @@
 
 flange 的 Alpine Linux 发行版层：musl + apk + OpenRC + busybox。
 基于 flange 的多层组合（`main` 分支，`docs/layers.md`），本层只提供发行版相关内容，
-板级 BSP 留在 flange 核心。
+板级 BSP 留在 flange 核心；RV1106 的 Ubuntu 与 Alpine 产品共用核心提供的 5.10.160 内核。
 
 ## 提供的策略
 
@@ -37,8 +37,8 @@ local product = std.extVar('product');
 RV1106 的 Rockit、MPP、RGA、RKAIQ 通过[独立 uClibc 多媒体包](components/packages/rockchip-multimedia-uclibc/README.md)
 运行在 Alpine 上。厂商库与 uClibc 位于 `/opt/rockchip-uclibc`，应用使用匹配的 uClibc ABI；
 系统和常规 App 继续使用 musl。其他 SoC、Mali、fastrpc、L4T 不在该包支持范围内。
-已在 RV1106G3 Max 上验证烧录、启动与四库加载；当前 BSP 缺少厂商 MPI 节点，
-硬件编码探针失败，摄像头与 RGA 硬件功能尚未通过。详见上述包说明的实机验证表。
+已在 RV1106G3 Max 上验证四库加载、MPI 连续内存、H.264 硬件编码及 RGA 图像复制/缩放；
+摄像头与 RKAIQ 算法尚待传感器验收，MCU 卷绕功能关闭。详见上述包说明的实机验证表。
 
 ## 使用
 
@@ -61,7 +61,7 @@ flange -C ../flange-alpine-ws app build musl-check
 flange -C ../flange-alpine-ws app build rockchip-multimedia-uclibc
 ```
 
-需要配套 flange 的 `packaging.isolated_runtime` 支持；旧版解析器会拒绝该字段。
+需要配套 flange 的 RV1106 5.10.160 BSP、`packaging.isolated_runtime` 和源码子目录补丁支持。
 已有构建环境须重新运行 `docker build` 安装 patchelf。库的用法、产物和验证范围见
 [多媒体包说明](components/packages/rockchip-multimedia-uclibc/README.md)。
 

@@ -1,7 +1,7 @@
 # 只向 /opt 安装厂商 ABI；系统入口是 Alpine /bin/sh 脚本。
 app:
   name: rockchip-multimedia-uclibc
-  version: 1.0.0-r0
+  version: 1.1.0-r0
   description: RV1106 Rockit、MPP、RGA、RKAIQ 与独立 uClibc 运行环境
   type: vendor
   arch: [armhf]

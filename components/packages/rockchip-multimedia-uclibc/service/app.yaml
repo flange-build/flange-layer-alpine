@@ -1,0 +1,23 @@
+# 在 OpenRC 默认级别启动多媒体驱动，服务与私有 ABI 包分别建模。
+app:
+  name: rockchip-multimedia-service
+  version: 1.0.0-r0
+  description: RV1106 多媒体驱动启动服务
+  type: service
+  arch: [armhf]
+maintainer:
+  name: flange
+  email: flange@localhost
+build:
+  system: none
+  deps: [rockchip-multimedia-uclibc]
+openrc:
+  script: openrc/rockchip-multimedia
+  auto_start: true
+  runlevel: default
+packaging:
+  format: apk
+  depends:
+    apk: [rockchip-multimedia-uclibc]
+install:
+  udev/90-rockchip-multimedia.rules: /etc/udev/rules.d/90-rockchip-multimedia.rules

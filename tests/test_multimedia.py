@@ -25,16 +25,26 @@ def media():
     )
 
 
-def test_multimedia_only_enabled_for_alpine_product():
+@pytest.mark.parametrize("variant", ["debug", "release"])
+def test_multimedia_only_enabled_for_alpine_product(variant):
     stack = LayerStack.load(TOOL_ROOT, [LAYER_ROOT])
-    alpine = resolve_config("luckfox-pico-pro-max", "alpine", "release",
+    alpine = resolve_config("luckfox-pico-pro-max", "alpine", variant,
                             project_root=TOOL_ROOT, layer_stack=stack)
-    ubuntu = resolve_config("luckfox-pico-pro-max", "default", "release",
+    ubuntu = resolve_config("luckfox-pico-pro-max", "default", variant,
                             project_root=TOOL_ROOT, layer_stack=stack)
+    core = resolve_config("luckfox-pico-pro-max", "default", variant,
+                          project_root=TOOL_ROOT)
     name = "rockchip-multimedia-uclibc"
     assert name in alpine["packages"]
     assert name in alpine["rootfs"]["custom_packages"]
     assert name in alpine["external_apps"]
+    assert "rockchip-multimedia-service" in alpine["rootfs"]["custom_packages"]
+    assert alpine["kernel"]["source"] == ubuntu["kernel"]["source"] == core["kernel"]["source"]
+    source_name = core["kernel"]["source"]["name"]
+    assert alpine["sources"][source_name] == core["sources"][source_name]
+    assert alpine["kernel"]["device_tree"] == core["kernel"]["device_tree"]
+    assert ubuntu["kernel"]["device_tree"] == core["kernel"]["device_tree"]
+    assert alpine["kernel"]["config"]["CONFIG_HIGH_RES_TIMERS"] == "y"
     assert name not in ubuntu.get("packages", [])
     assert name not in ubuntu["rootfs"]["custom_packages"]
 
@@ -55,7 +65,7 @@ def test_source_lock_covers_runtime_sdk_startup_and_licenses():
     sources = json.loads((PACKAGE / "runtime/sources.json").read_text())
     assert set(sources) == {
         "sdk", "runtime", "crt1.o", "crti.o", "crtn.o", "crtbegin.o", "crtend.o",
-        "COPYING.LIB", "COPYING3", "COPYING.RUNTIME",
+        "COPYING.LIB", "COPYING3", "COPYING.RUNTIME", "hpmcu_wrap.bin",
     }
     for source in sources.values():
         assert source["url"].startswith("https://")
@@ -120,3 +130,26 @@ def test_launcher_rejects_missing_or_nonprivate_program(arguments):
         capture_output=True, text=True,
     )
     assert result.returncode != 0
+
+
+@pytest.mark.parametrize("failure", ["checksum", "vermagic"])
+def test_driver_install_rejects_incompatible_or_corrupt_module(tmp_path, monkeypatch, failure):
+    driver = load_strategy(
+        "components/packages/rockchip-multimedia-uclibc/driver/prepare.py", "media_driver"
+    )
+    sdk = tmp_path / "sdk"
+    output = tmp_path / "output"
+    sdk.mkdir()
+    output.mkdir()
+    good = b"\0vermagic=5.10.160 mod_unload ARMv7 thumb2 p2v8 \0"
+    wrong = b"\0vermagic=6.1.115+ mod_unload ARMv7 thumb2 p2v8 \0"
+    (output / "abi_check.o").write_bytes(good)
+    (sdk / "driver.ko").write_bytes(wrong if failure == "vermagic" else good + b"changed")
+    expected = wrong if failure == "vermagic" else good
+    (tmp_path / "modules.json").write_text(json.dumps({"driver.ko": {
+        "path": "driver.ko", "sha256": hashlib.sha256(expected).hexdigest(),
+    }}))
+    monkeypatch.setattr(driver, "__file__", str(tmp_path / "prepare.py"))
+    with pytest.raises(ValueError, match="SHA256|vermagic"):
+        driver.prepare(sdk, output)
+    assert not (output / "driver.ko").exists()

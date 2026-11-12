@@ -1,0 +1,10 @@
+{
+  "rockit.ko": {
+    "path": "rockit/release_rockit-ko_rv1106_arm/rockit.ko",
+    "sha256": "75a033b9f8ae5cb621900ec26477fd7aebff4261137adce8a6a1dade6564e02b"
+  },
+  "mpp_vcodec.ko": {
+    "path": "kmpp/release_kmpp_rv1106_arm/mpp_vcodec.ko",
+    "sha256": "5272153e7e51d3df735af639f9dc93d2728a294ca82a7910ad4bca43efc4dbae"
+  }
+}

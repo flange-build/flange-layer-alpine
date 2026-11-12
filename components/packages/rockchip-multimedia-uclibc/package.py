@@ -5,5 +5,6 @@ PACKAGE = {
     "description": "Rockit、MPP、RGA、RKAIQ 与私有 uClibc 运行时",
     "components": [
         {"type": "vendor", "name": "rockchip-multimedia-uclibc", "dir": "runtime"},
+        {"type": "vendor", "name": "rockchip-multimedia-service", "dir": "service"},
     ],
 }

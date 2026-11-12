@@ -38,5 +38,9 @@
   "COPYING.RUNTIME": {
     "url": "https://raw.githubusercontent.com/LuckfoxTECH/luckfox-pico/824b817f889c2cbff1d48fcdb18ab494a68f69d1/tools/linux/toolchain/arm-rockchip830-linux-uclibcgnueabihf/share/licenses/gcc/COPYING.RUNTIME",
     "sha256": "9d6b43ce4d8de0c878bf16b54d8e7a10d9bd42b75178153e3af6a815bdc90f74"
+  },
+  "hpmcu_wrap.bin": {
+    "url": "https://raw.githubusercontent.com/LuckfoxTECH/luckfox-pico/824b817f889c2cbff1d48fcdb18ab494a68f69d1/sysdrv/drv_ko/rockit/release_rockit-ko_rv1106_arm/hpmcu_wrap.bin",
+    "sha256": "7c6c18c71183b4874ceb5b4e24b96d4221f1b2e877bc049f67fcab3c9ea1b236"
   }
 }

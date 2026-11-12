@@ -1,4 +1,4 @@
-"""固定官方 SDK 与运行库，交付私有 ABI 目录和无硬件依赖的加载检查程序。"""
+"""固定官方 SDK 与运行库，交付私有 ABI 目录、固件与硬件自检程序。"""
 
 from __future__ import annotations
 
@@ -123,6 +123,24 @@ def build() -> None:
         "-Wl,-rpath-link," + str(runtime / "lib"), "-l:libc.so.0", "-l:libgcc_s.so.1",
         str(inputs["crtend.o"]), str(inputs["crtn.o"]), "-o", str(binary),
     ], check=True)
+    for name, source, extra in (
+        ("rockchip-multimedia-encode", "encode.c", []),
+        ("rockchip-multimedia-rga", "rga.c", ["-lrga"]),
+    ):
+        subprocess.run([
+            os.environ["CC"], "--target=arm-linux-gnueabihf", "--sysroot=" + str(runtime),
+            "-nostdlib", "-ffreestanding", "-fno-stack-protector", "-fno-pie",
+            "-Wl,-no-pie", "-O2", "-I" + str(headers),
+            "-Wl,--dynamic-linker=" + RUNTIME_ROOT + "/lib/ld-uClibc.so.0",
+            str(inputs["crt1.o"]), str(inputs["crti.o"]), str(inputs["crtbegin.o"]),
+            str(ROOT / source), "-L" + str(libraries), "-L" + str(runtime / "lib"),
+            "-Wl,-rpath-link," + str(libraries), "-Wl,-rpath-link," + str(runtime / "lib"),
+            "-lrockit", *extra, "-l:libc.so.0", "-l:libgcc_s.so.1",
+            str(inputs["crtend.o"]), str(inputs["crtn.o"]), "-o", str(binary.parent / name),
+        ], check=True)
+    firmware = install / "lib/firmware/rockchip/rv1106-hpmcu.bin"
+    firmware.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(inputs["hpmcu_wrap.bin"], firmware)
     launcher = install / "usr/bin/rockchip-uclibc-run"
     launcher.parent.mkdir(parents=True, exist_ok=True)
     copy_entry(ROOT / "rockchip-uclibc-run", launcher)

@@ -1,0 +1,6 @@
+# 允许 video 组使用多媒体节点；保留对其他用户的访问限制。
+SUBSYSTEM=="mpi", GROUP="video", MODE="0660"
+SUBSYSTEM=="misc", KERNEL=="rga", GROUP="video", MODE="0660"
+KERNEL=="vcodec", GROUP="video", MODE="0660"
+KERNEL=="mpp_service", GROUP="video", MODE="0660"
+SUBSYSTEM=="dma_heap", GROUP="video", MODE="0660"

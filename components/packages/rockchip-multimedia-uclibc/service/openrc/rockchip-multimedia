@@ -1,0 +1,28 @@
+#!/sbin/openrc-run
+# 官方 RV1106 多媒体模块；失败应传播给服务管理器。
+description="RV1106 Rockit、MPP 与 RGA 驱动"
+
+depend() {
+    need localmount
+    after modules udev-settle usbmoded
+}
+
+start() {
+    ebegin "加载 RV1106 多媒体驱动"
+    # 普通帧缓冲编码与 RGA 不需要卷绕 MCU。当前 TOS 下厂商 MCU 驱动写
+    # HPMCU 启动地址会触发总线异常，不能自动启用该未适配的可选通路。
+    modprobe rockit en_mcu=0 || { eend 1; return 1; }
+    for node in /dev/mpi/valloc /dev/mpi/vsys /dev/mpi/venc /dev/rga /dev/vcodec; do
+        if [ ! -c "$node" ]; then
+            eerror "缺少多媒体设备：$node"
+            eend 1
+            return 1
+        fi
+    done
+    eend 0
+}
+
+stop() {
+    # 编码任务可能仍持有模块引用；不强制卸载正在使用的内核驱动。
+    return 0
+}
