@@ -1,0 +1,42 @@
+{
+  "sdk": {
+    "url": "https://codeload.github.com/LuckfoxTECH/luckfox_pico_rkmpi_example/tar.gz/55178250c05542b156ac94c8c08cecef46589abf",
+    "sha256": "e7e7d761078f9a803de8d30a9f5dc836557f17278ebaf5583f3ad970caf853ce"
+  },
+  "runtime": {
+    "url": "https://raw.githubusercontent.com/LuckfoxTECH/luckfox-pico/824b817f889c2cbff1d48fcdb18ab494a68f69d1/tools/linux/toolchain/arm-rockchip830-linux-uclibcgnueabihf/runtime_lib/lib.tar.bz2",
+    "sha256": "5bb5b44ab7d2259d05eb85b88faf4aa31cc585efbcdfe89816a2a0294c6d7643"
+  },
+  "crt1.o": {
+    "url": "https://raw.githubusercontent.com/LuckfoxTECH/luckfox-pico/824b817f889c2cbff1d48fcdb18ab494a68f69d1/tools/linux/toolchain/arm-rockchip830-linux-uclibcgnueabihf/arm-rockchip830-linux-uclibcgnueabihf/sysroot/usr/lib/crt1.o",
+    "sha256": "12dfaebd1fbc05772b5a9f2eccb92d03aaa4c94c962cd209c41a218df75bc978"
+  },
+  "crti.o": {
+    "url": "https://raw.githubusercontent.com/LuckfoxTECH/luckfox-pico/824b817f889c2cbff1d48fcdb18ab494a68f69d1/tools/linux/toolchain/arm-rockchip830-linux-uclibcgnueabihf/arm-rockchip830-linux-uclibcgnueabihf/sysroot/usr/lib/crti.o",
+    "sha256": "de22dab704b4afdf1f963902390babd3b9e09007c5d50e9e6977970a3b953ee9"
+  },
+  "crtn.o": {
+    "url": "https://raw.githubusercontent.com/LuckfoxTECH/luckfox-pico/824b817f889c2cbff1d48fcdb18ab494a68f69d1/tools/linux/toolchain/arm-rockchip830-linux-uclibcgnueabihf/arm-rockchip830-linux-uclibcgnueabihf/sysroot/usr/lib/crtn.o",
+    "sha256": "3de0127f09b44c61eebe6c7f37b2ed87cca31e5f7bb914b70a7b80d9e8426b23"
+  },
+  "crtbegin.o": {
+    "url": "https://raw.githubusercontent.com/LuckfoxTECH/luckfox-pico/824b817f889c2cbff1d48fcdb18ab494a68f69d1/tools/linux/toolchain/arm-rockchip830-linux-uclibcgnueabihf/lib/gcc/arm-rockchip830-linux-uclibcgnueabihf/8.3.0/crtbegin.o",
+    "sha256": "71a1c4c31832d6cf61383df3a3f8892cf5df2f53fd2f459ef0078d82b90ec494"
+  },
+  "crtend.o": {
+    "url": "https://raw.githubusercontent.com/LuckfoxTECH/luckfox-pico/824b817f889c2cbff1d48fcdb18ab494a68f69d1/tools/linux/toolchain/arm-rockchip830-linux-uclibcgnueabihf/lib/gcc/arm-rockchip830-linux-uclibcgnueabihf/8.3.0/crtend.o",
+    "sha256": "ccd993510412f22cac1e2f8cc4164982d4ae68f0dcddb6239ccae67fb79c3d53"
+  },
+  "COPYING.LIB": {
+    "url": "https://raw.githubusercontent.com/LuckfoxTECH/luckfox-pico/824b817f889c2cbff1d48fcdb18ab494a68f69d1/tools/linux/toolchain/arm-rockchip830-linux-uclibcgnueabihf/share/licenses/uClibc/COPYING.LIB",
+    "sha256": "6095e9ffa777dd22839f7801aa845b31c9ed07f3d6bf8a26dc5d2dec8ccc0ef3"
+  },
+  "COPYING3": {
+    "url": "https://raw.githubusercontent.com/LuckfoxTECH/luckfox-pico/824b817f889c2cbff1d48fcdb18ab494a68f69d1/tools/linux/toolchain/arm-rockchip830-linux-uclibcgnueabihf/share/licenses/gcc/COPYING3",
+    "sha256": "8ceb4b9ee5adedde47b31e975c1d90c73ad27b6b165a1dcd80c7c545eb65b903"
+  },
+  "COPYING.RUNTIME": {
+    "url": "https://raw.githubusercontent.com/LuckfoxTECH/luckfox-pico/824b817f889c2cbff1d48fcdb18ab494a68f69d1/tools/linux/toolchain/arm-rockchip830-linux-uclibcgnueabihf/share/licenses/gcc/COPYING.RUNTIME",
+    "sha256": "9d6b43ce4d8de0c878bf16b54d8e7a10d9bd42b75178153e3af6a815bdc90f74"
+  }
+}

@@ -6,6 +6,8 @@ local product = std.extVar('product');
   products+: ['alpine'],
 } + (if product == 'alpine' then {
   distro: 'alpine',
+  // 厂商多媒体栈携带独立 uClibc 运行时，不向系统 /lib 与 /usr/lib 注入库。
+  packages+: ['rockchip-multimedia-uclibc'],
   extensions+: {
     // RV1106 串口由 fiq-debugger 以 ttyFIQ0 提供。
     'distro:alpine'+: { consoles: ['ttyFIQ0'] },

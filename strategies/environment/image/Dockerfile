@@ -40,3 +40,8 @@ RUN set -eu; for tool in /opt/flange-alpine/wrappers/*; do \
     done \
     && ln -s /opt/swift-embedded/bin/llvm-objcopy /usr/local/bin/armv7-alpine-linux-musleabihf-strip \
     && armv7-alpine-linux-musleabihf-gcc --version
+
+# 私有运行时的 ELF 加载器重定位工具，在构建容器内运行。
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends patchelf \
+    && rm -rf /var/lib/apt/lists/*

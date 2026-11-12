@@ -1,0 +1,20 @@
+#!/bin/sh
+# 设备入口由 Alpine /bin/sh 执行；库搜索路径仅对本次 uClibc 子进程生效。
+set -eu
+if [ "$#" -eq 0 ]; then
+    echo "用法：rockchip-uclibc-run /opt/rockchip-uclibc/bin/程序 [参数...]" >&2
+    exit 2
+fi
+program=$(readlink -f "$1")
+case "$program" in
+    /opt/rockchip-uclibc/bin/*) ;;
+    *) echo "程序必须安装在 /opt/rockchip-uclibc/bin 并使用私有加载器" >&2; exit 2 ;;
+esac
+if [ ! -f "$program" ] || [ ! -x "$program" ]; then
+    echo "程序不存在或不可执行：$program" >&2
+    exit 1
+fi
+shift
+unset LD_PRELOAD LD_AUDIT
+export LD_LIBRARY_PATH=/opt/rockchip-uclibc/lib:/opt/rockchip-uclibc/usr/lib
+exec "$program" "$@"

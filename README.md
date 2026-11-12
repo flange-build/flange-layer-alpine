@@ -9,7 +9,7 @@ flange 的 Alpine Linux 发行版层：musl + apk + OpenRC + busybox。
 | 种类 | 名称 | 内容 |
 | --- | --- | --- |
 | `distro` | `alpine` | Alpine 3.24 minirootfs（按架构 SHA256 固定）+ qemu chroot `apk add`；账号、主机名、串口 getty、OpenRC runlevel；apk 包清单 |
-| `environment` | `alpine` | `flange-build` 镜像 + `apk.static`（摘要校验）+ 验签的 armv7 musl SDK；编译器复用镜像随 Swift 提供的 clang/lld |
+| `environment` | `alpine` | `flange-build` 镜像 + `apk.static`（摘要校验）+ 验签的 armv7 musl SDK + patchelf；编译器复用镜像随 Swift 提供的 clang/lld |
 | `toolchain` | `alpine` | `armv7-alpine-linux-musleabihf-*` 包装脚本，SDK 位于 `/opt/flange-sdk/armv7` |
 | `packaging` | `apk` | `apk mkpkg` 生成 apk v3 包；导入时校验包架构；OpenRC 安装和升级时兑现 `auto_start` |
 
@@ -20,7 +20,7 @@ Alpine 专有参数在 `extensions['distro:alpine']`（版本、镜像站、mini
 
 | 板卡 | product | 说明 |
 | --- | --- | --- |
-| `luckfox-pico-pro-max`（RV1106G2/G3） | `alpine` | SPI NAND + UBI rootfs，串口 `ttyFIQ0`，默认装 adbd + usbmoded |
+| `luckfox-pico-pro-max`（RV1106G2/G3） | `alpine` | SPI NAND + UBI rootfs，串口 `ttyFIQ0`，默认装 adbd、usbmoded 和独立 uClibc 多媒体运行时 |
 
 其他板卡按同样方式在本层 `components/board/<board>/config.jsonnet` 追加 product：
 
@@ -34,7 +34,11 @@ local product = std.extVar('product');
 } else {})
 ```
 
-依赖厂商 glibc 用户态（Mali、RGA/MPP、fastrpc、L4T 等）的功能在 musl 上不可用。
+RV1106 的 Rockit、MPP、RGA、RKAIQ 通过[独立 uClibc 多媒体包](components/packages/rockchip-multimedia-uclibc/README.md)
+运行在 Alpine 上。厂商库与 uClibc 位于 `/opt/rockchip-uclibc`，应用使用匹配的 uClibc ABI；
+系统和常规 App 继续使用 musl。其他 SoC、Mali、fastrpc、L4T 不在该包支持范围内。
+已在 RV1106G3 Max 上验证烧录、启动与四库加载；当前 BSP 缺少厂商 MPI 节点，
+硬件编码探针失败，摄像头与 RGA 硬件功能尚未通过。详见上述包说明的实机验证表。
 
 ## 使用
 
@@ -54,7 +58,12 @@ flange -C ../flange-alpine-ws target select luckfox-pico-pro-max-alpine-release
 flange -C ../flange-alpine-ws docker build      # 构建 flange-alpine:3.24 环境镜像
 flange -C ../flange-alpine-ws build             # 完整镜像
 flange -C ../flange-alpine-ws app build musl-check
+flange -C ../flange-alpine-ws app build rockchip-multimedia-uclibc
 ```
+
+需要配套 flange 的 `packaging.isolated_runtime` 支持；旧版解析器会拒绝该字段。
+已有构建环境须重新运行 `docker build` 安装 patchelf。库的用法、产物和验证范围见
+[多媒体包说明](components/packages/rockchip-multimedia-uclibc/README.md)。
 
 ## App 约定
 

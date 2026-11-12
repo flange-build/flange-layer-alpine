@@ -1,0 +1,21 @@
+# 只向 /opt 安装厂商 ABI；系统入口是 Alpine /bin/sh 脚本。
+app:
+  name: rockchip-multimedia-uclibc
+  version: 1.0.0-r0
+  description: RV1106 Rockit、MPP、RGA、RKAIQ 与独立 uClibc 运行环境
+  type: vendor
+  arch: [armhf]
+maintainer:
+  name: flange
+  email: flange@localhost
+build:
+  system: custom
+  commands:
+    - [python3, build.py]
+packaging:
+  format: apk
+  depends:
+    apk: [musl]
+  isolated_runtime:
+    root: /opt/rockchip-uclibc
+    loader: lib/ld-uClibc.so.0
