@@ -21,7 +21,7 @@ ROOT = Path(__file__).resolve().parent
 RUNTIME_ROOT = "/opt/rockchip-uclibc"
 LIBRARIES = (
     "librockit.so", "librockchip_mpp.so", "librockchip_mpp.so.0",
-    "librockchip_mpp.so.1", "librga.so", "librkaiq.so",
+    "librockchip_mpp.so.1", "librga.so", "librkaiq.so", "librknnmrt.so",
 )
 RUNTIME_LIBRARIES = (
     "ld-uClibc-1.0.31.so", "ld-uClibc.so.0", "ld-uClibc.so.1",
@@ -94,7 +94,7 @@ def build() -> None:
     headers.mkdir(parents=True)
     for source in sorted((sdk / "include").glob("rk_*.h")):
         copy_entry(source, headers / source.name)
-    for name in ("rockchip", "librga", "rkaiq"):
+    for name in ("rockchip", "librga", "rkaiq", "rknn"):
         copy_tree(sdk / "include" / name, headers / name)
     # strip 仅作用于隔离副本，保留符号链接；厂商原始输入仍由 SHA256 标识。
     for directory in (runtime / "lib", libraries):
@@ -124,8 +124,9 @@ def build() -> None:
         str(inputs["crtend.o"]), str(inputs["crtn.o"]), "-o", str(binary),
     ], check=True)
     for name, source, extra in (
-        ("rockchip-multimedia-encode", "encode.c", []),
-        ("rockchip-multimedia-rga", "rga.c", ["-lrga"]),
+        ("rockchip-multimedia-encode", "encode.c", ["-lrockit"]),
+        ("rockchip-multimedia-rga", "rga.c", ["-lrockit", "-lrga"]),
+        ("rockchip-rknn-yolo", "rknn_yolo.c", ["-lrknnmrt"]),
     ):
         subprocess.run([
             os.environ["CC"], "--target=arm-linux-gnueabihf", "--sysroot=" + str(runtime),
@@ -135,7 +136,7 @@ def build() -> None:
             str(inputs["crt1.o"]), str(inputs["crti.o"]), str(inputs["crtbegin.o"]),
             str(ROOT / source), "-L" + str(libraries), "-L" + str(runtime / "lib"),
             "-Wl,-rpath-link," + str(libraries), "-Wl,-rpath-link," + str(runtime / "lib"),
-            "-lrockit", *extra, "-l:libc.so.0", "-l:libgcc_s.so.1",
+            *extra, "-l:libc.so.0", "-l:libgcc_s.so.1",
             str(inputs["crtend.o"]), str(inputs["crtn.o"]), "-o", str(binary.parent / name),
         ], check=True)
     firmware = install / "lib/firmware/rockchip/rv1106-hpmcu.bin"

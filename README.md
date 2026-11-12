@@ -34,10 +34,10 @@ local product = std.extVar('product');
 } else {})
 ```
 
-RV1106 的 Rockit、MPP、RGA、RKAIQ 通过[独立 uClibc 多媒体包](components/packages/rockchip-multimedia-uclibc/README.md)
+RV1106 的 Rockit、MPP、RGA、RKAIQ、RKNN 通过[独立 uClibc 多媒体包](components/packages/rockchip-multimedia-uclibc/README.md)
 运行在 Alpine 上。厂商库与 uClibc 位于 `/opt/rockchip-uclibc`，应用使用匹配的 uClibc ABI；
 系统和常规 App 继续使用 musl。其他 SoC、Mali、fastrpc、L4T 不在该包支持范围内。
-已在 RV1106G3 Max 上验证四库加载、MPI 连续内存、H.264 硬件编码及 RGA 图像复制/缩放；
+已在 RV1106G3 Max 上验证五库加载、MPI 连续内存、H.264 硬件编码、RGA 图像复制/缩放及 NPU YOLOv5 图片推理；
 摄像头与 RKAIQ 算法尚待传感器验收，MCU 卷绕功能关闭。详见上述包说明的实机验证表。
 
 ## 使用

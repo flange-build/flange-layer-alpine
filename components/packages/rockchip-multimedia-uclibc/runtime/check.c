@@ -9,10 +9,10 @@ extern int puts(const char *text);
 int main(void)
 {
     const char *libraries[] = {
-        "librockchip_mpp.so.1", "librga.so", "librkaiq.so", "librockit.so"
+        "librockchip_mpp.so.1", "librga.so", "librkaiq.so", "librockit.so", "librknnmrt.so"
     };
     const char *symbols[] = {
-        "mpp_create", "c_RkRgaInit", "rk_aiq_uapi2_sysctl_init", "RK_MPI_SYS_Init"
+        "mpp_create", "c_RkRgaInit", "rk_aiq_uapi2_sysctl_init", "RK_MPI_SYS_Init", "rknn_init"
     };
     unsigned int index;
 
@@ -25,8 +25,8 @@ int main(void)
             return 1;
         }
         puts(libraries[index]);
-        /* 库保留至进程结束，同时验证四库及共享依赖能在一个进程内共存。 */
+        /* 库保留至进程结束，同时验证五库及共享依赖能在一个进程内共存。 */
     }
-    puts("Rockchip uClibc: 4 libraries loaded; hardware not tested");
+    puts("Rockchip uClibc: 5 libraries loaded; hardware not tested");
     return 0;
 }

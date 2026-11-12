@@ -45,6 +45,8 @@ def test_multimedia_only_enabled_for_alpine_product(variant):
     assert alpine["kernel"]["device_tree"] == core["kernel"]["device_tree"]
     assert ubuntu["kernel"]["device_tree"] == core["kernel"]["device_tree"]
     assert alpine["kernel"]["config"]["CONFIG_HIGH_RES_TIMERS"] == "y"
+    assert core["kernel"]["config"]["CONFIG_ROCKCHIP_RKNPU"] == "m"
+    assert core["kernel"]["config"]["CONFIG_ROCKCHIP_RKNPU_DMA_HEAP"] == "y"
     assert name not in ubuntu.get("packages", [])
     assert name not in ubuntu["rootfs"]["custom_packages"]
 
@@ -57,7 +59,7 @@ def test_package_declares_private_runtime_and_required_libraries(media):
     assert spec.packaging.isolated_runtime.root == "/opt/rockchip-uclibc"
     assert spec.packaging.isolated_runtime.loader == "lib/ld-uClibc.so.0"
     assert set(media.LIBRARIES) >= {
-        "librockit.so", "librockchip_mpp.so.1", "librga.so", "librkaiq.so",
+        "librockit.so", "librockchip_mpp.so.1", "librga.so", "librkaiq.so", "librknnmrt.so",
     }
 
 
@@ -153,3 +155,27 @@ def test_driver_install_rejects_incompatible_or_corrupt_module(tmp_path, monkeyp
     with pytest.raises(ValueError, match="SHA256|vermagic"):
         driver.prepare(sdk, output)
     assert not (output / "driver.ko").exists()
+
+
+def test_demo_download_rejects_corrupt_model_without_replacing_output(tmp_path):
+    demo = load_strategy(
+        "components/packages/rockchip-multimedia-uclibc/demo/demo.py", "rknn_demo"
+    )
+    source = tmp_path / "upstream"
+    source.write_bytes(b"model")
+    descriptor = {"url": source.as_uri(), "sha256": hashlib.sha256(b"model").hexdigest()}
+    destination = tmp_path / "model.rknn"
+    demo.fetch(descriptor, destination)
+    assert destination.read_bytes() == b"model"
+    source.unlink()
+    demo.fetch(descriptor, destination)
+    destination.write_bytes(b"damaged")
+    with pytest.raises(ValueError, match="SHA256"):
+        demo.fetch(descriptor, destination)
+    assert destination.read_bytes() == b"damaged"
+    destination.unlink()
+    source.write_bytes(b"incorrect download")
+    with pytest.raises(ValueError, match="摘要"):
+        demo.fetch(descriptor, destination)
+    assert not destination.exists()
+    assert not list(tmp_path.glob(".download-*"))

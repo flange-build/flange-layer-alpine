@@ -1,0 +1,14 @@
+{
+  "yolov5.rknn": {
+    "url": "https://raw.githubusercontent.com/LuckfoxTECH/luckfox_pico_rkmpi_example/55178250c05542b156ac94c8c08cecef46589abf/example/luckfox_pico_rtsp_yolov5/model/yolov5.rknn",
+    "sha256": "7e72c8caa060ea15d69109e4af6c1f80005cbd1be14bbe1f6f2af9175861c44a"
+  },
+  "coco_80_labels_list.txt": {
+    "url": "https://raw.githubusercontent.com/LuckfoxTECH/luckfox_pico_rkmpi_example/55178250c05542b156ac94c8c08cecef46589abf/example/luckfox_pico_rtsp_yolov5/model/coco_80_labels_list.txt",
+    "sha256": "bd17f1ee35d5f3c862a4894605855abbb9dda4b0621fdb0ac4c2c8c7bb7e730a"
+  },
+  "bus.jpg": {
+    "url": "https://raw.githubusercontent.com/airockchip/rknn_model_zoo/837db8e992815ff8647eadb709f07067f4bc3a71/examples/yolov5/model/bus.jpg",
+    "sha256": "fb4914d123d97c440cd127ef0e98d4bdc68cd88e2683657528928b4a34014e16"
+  }
+}
